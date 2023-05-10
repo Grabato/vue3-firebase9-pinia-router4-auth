@@ -1,11 +1,12 @@
+import { defineStore } from "pinia";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import { defineStore } from "pinia";
 import router from "../router";
 import { useDatabaseStore } from "./database";
 
@@ -16,24 +17,20 @@ export const useUserStore = defineStore("userStore", {
     loadingSession: false,
   }),
   actions: {
-    //REGISTRAR
     async registerUser(email, password) {
       this.loadingUser = true;
       try {
-        const { user } = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        this.userData = { email: user.email, uid: user.uid };
-        router.push("/");
+        await createUserWithEmailAndPassword(auth, email, password);
+        // this.userData = { email: user.email, uid: user.uid };
+        await sendEmailVerification(auth.currentUser);
+        router.push("/login");
       } catch (error) {
-        console.log(error);
+        console.log(error.code);
+        return error.code;
       } finally {
         this.loadingUser = false;
       }
     },
-    //INICIAR SESIÓN
     async loginUser(email, password) {
       this.loadingUser = true;
       try {
@@ -45,32 +42,28 @@ export const useUserStore = defineStore("userStore", {
         this.userData = { email: user.email, uid: user.uid };
         router.push("/");
       } catch (error) {
-        console.log(error);
+        console.log(error.code);
+        return error.code;
       } finally {
         this.loadingUser = false;
       }
     },
-    //CERRAR SESIÓN
     async logoutUser() {
-      this.loadingUser = true;
       const databaseStore = useDatabaseStore();
+      databaseStore.$reset();
       try {
         await signOut(auth);
+        this.userData = null;
         router.push("/login");
       } catch (error) {
         console.log(error);
-      } finally {
-        this.loadingUser = false;
-        this.userData = null;
-        databaseStore.$reset();
       }
     },
     currentUser() {
       return new Promise((resolve, reject) => {
-        const unsubcribe = onAuthStateChanged(
+        const unsuscribe = onAuthStateChanged(
           auth,
           (user) => {
-            const databaseStore = useDatabaseStore();
             if (user) {
               this.userData = {
                 email: user.email,
@@ -78,13 +71,14 @@ export const useUserStore = defineStore("userStore", {
               };
             } else {
               this.userData = null;
+              const databaseStore = useDatabaseStore();
               databaseStore.$reset();
             }
             resolve(user);
           },
           (e) => reject(e)
         );
-        unsubcribe();
+        unsuscribe();
       });
     },
   },
