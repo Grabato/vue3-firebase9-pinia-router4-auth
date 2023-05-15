@@ -1,5 +1,4 @@
 <template>
-  
   <a-layout>
 
     <a-layout-header v-if="!userStore.loadingSession">
@@ -9,9 +8,14 @@
         <a-menu-item v-if="userStore.userData" key="home">
 
           <router-link to="/">Home</router-link>
-          
+
         </a-menu-item>
 
+        <a-menu-item v-if="userStore.userData" key="perfil">
+
+          <router-link to="/perfil">Perfil</router-link>
+
+        </a-menu-item>
 
         <a-menu-item v-if="!userStore.userData" key="login">
 
@@ -49,7 +53,6 @@
     </a-layout-content>
 
   </a-layout>
-
 </template>
 
 
@@ -70,11 +73,20 @@ watch(
 
 <style>
 .container {
-    background-color: #fff;
-    padding: 24px;
-    min-height: calc(100vh - 64px);
+  background-color: #fff;
+  padding: 24px;
+  min-height: calc(100vh - 64px);
 }
+
 .text-center {
-    text-align: center;
+  text-align: center;
+}
+
+.mb{
+  margin-bottom: 2rem;
+}
+
+.mt{
+  margin-top: 2rem;
 }
 </style>
